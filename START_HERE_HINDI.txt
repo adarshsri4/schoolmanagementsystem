@@ -1,0 +1,16 @@
+SCHOOL MANAGEMENT SYSTEM - BACKEND START GUIDE
+
+1. Install JDK 17 or newer.
+2. Install Apache Maven and ensure `mvn -version` works in Command Prompt.
+3. Extract this ZIP.
+4. Open the extracted school_management_website/backend folder.
+5. Double-click start-backend.bat (or run `mvn spring-boot:run` in that folder).
+6. Keep the terminal open. Wait for a message similar to "Started SchoolManagementApplication".
+7. The backend uses a local H2 file database by default; MySQL is not required for the first run.
+8. Open the website locally on the same computer and submit the admission form. It sends data to http://localhost:8080/api/admissions.
+
+IMPORTANT:
+- The public GitHub Pages website cannot save to your computer's localhost for other visitors. This local setup is for testing on your own computer.
+- To make the backend work for everyone online, deploy it to a public server and change API_BASE in app.js to that deployed HTTPS API URL. Then restrict CORS to your actual website domain.
+- Fee payment remains a demo and does not collect real money.
+- Do not collect real student information until you have secured and deployed the backend appropriately.

@@ -5,7 +5,7 @@ This project contains the responsive school website prototype and a Java Spring 
 ## Website frontend
 1. Extract the ZIP.
 2. Open `index.html` in a browser or use VS Code Live Server.
-3. The current frontend keeps demo submissions in that browser's localStorage. It is not yet connected to the REST API automatically.
+3. The admission form and admission-status lookup call the Spring Boot API at `http://localhost:8080`. For local testing, open this folder using VS Code Live Server (do not test the localhost backend from the public GitHub Pages URL). Fee payment remains demo-only.
 
 ## Java backend (Spring Boot)
 Requirements: Java 17+ and Maven.
@@ -15,7 +15,15 @@ Requirements: Java 17+ and Maven.
 3. The API starts at `http://localhost:8080` and uses a local file-based H2 database by default, so MySQL is not required for the first run.
 4. H2 console: `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:file:./data/sunrise-school`, user `sa`, blank password). Do not expose this console publicly.
 
-### API examples
+### Connect and test the frontend
+1. Start the backend as described above and keep its terminal open.
+2. In VS Code, install the **Live Server** extension if needed.
+3. Right-click the top-level `index.html` and choose **Open with Live Server**.
+4. Submit the admission form. A successful response should show an `SPS-...` application number.
+
+The frontend points to `http://localhost:8080`. It is intended for local testing. A public website cannot use visitors' own `localhost`; deploy the backend to a public HTTPS host and update `API_BASE_URL` before connecting the GitHub Pages site.
+
+## API examples
 Create admission:
 ```bash
 curl -X POST http://localhost:8080/api/admissions -H "Content-Type: application/json" -d '{"studentName":"Aarav Sharma","parentName":"Ravi Sharma","email":"parent@example.com","phone":"9876543210","requestedClass":"Class 1","address":"Delhi"}'

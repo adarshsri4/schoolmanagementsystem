@@ -27,14 +27,45 @@ $$('.modal-backdrop').forEach(backdrop => backdrop.addEventListener('click', e =
 }));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $$('.modal-backdrop.open').forEach(m => m.classList.remove('open')); });
 
-// Admission form: browser-local demo only
-$('#admissionForm').addEventListener('submit', e => {
+// Admission form: submit to the local Spring Boot API.
+const API_BASE_URL = 'http://localhost:8080';
+$('#admissionForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const form = e.currentTarget; const data = Object.fromEntries(new FormData(form).entries());
-  data.applicationId = makeId('SPS'); data.status = 'Application received (demo)'; data.submittedAt = new Date().toISOString();
-  const admissions = readStore(STORAGE.admissions); admissions.push(data); writeStore(STORAGE.admissions, admissions);
-  showMessage($('#admissionMessage'), `Application submitted for this demo. Your application number is ${data.applicationId}. Save it to check status later.`);
-  toast('Demo application saved in this browser.'); form.reset();
+  const form = e.currentTarget;
+  const formData = Object.fromEntries(new FormData(form).entries());
+  const message = $('#admissionMessage');
+  const submitButton = form.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  showMessage(message, 'Submitting application…');
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admissions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentName: formData.studentName,
+        parentName: formData.guardian,
+        email: formData.email,
+        phone: formData.phone,
+        requestedClass: formData.grade,
+        address: formData.address
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = result.detail || result.message || 'Please check the details and try again.';
+      throw new Error(detail);
+    }
+    showMessage(message, `Application submitted successfully! Your application number is ${result.applicationNumber}. Save it to check status later.`);
+    toast('Admission application saved to the backend database.');
+    form.reset();
+  } catch (error) {
+    const isConnectionError = error instanceof TypeError;
+    showMessage(message, isConnectionError
+      ? 'Could not connect to the backend. Start Spring Boot at http://localhost:8080 and open this website locally with VS Code Live Server.'
+      : `Application was not submitted: ${error.message}`, true);
+  } finally {
+    submitButton.disabled = false;
+  }
 });
 
 // Fee calculator and mock transaction
@@ -57,11 +88,22 @@ $('#loginForm').addEventListener('submit', e => {
   e.preventDefault(); showMessage($('#loginMessage'), 'This is a UI prototype. Real login needs a Java backend, password hashing and role-based access.');
 });
 
-// Admission status lookup
-$('#statusForm').addEventListener('submit', e => {
-  e.preventDefault(); const id = $('#statusNumber').value.trim().toUpperCase();
-  const record = readStore(STORAGE.admissions).find(item => item.applicationId.toUpperCase() === id);
-  showMessage($('#statusMessage'), record ? `Application found for ${record.studentName}. Current status: ${record.status}. (Demo record)` : 'No matching demo application found in this browser. Submit an application here first and use its application number.', !record);
+// Admission status lookup through the Spring Boot API
+$('#statusForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('#statusNumber').value.trim().toUpperCase();
+  const message = $('#statusMessage');
+  showMessage(message, 'Checking application…');
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admissions/${encodeURIComponent(id)}`);
+    const record = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(record.detail || record.message || 'Application not found.');
+    showMessage(message, `Application found for ${record.studentName}. Class: ${record.requestedClass}. Current status: ${record.status}.`);
+  } catch (error) {
+    showMessage(message, error instanceof TypeError
+      ? 'Could not connect to the backend. Start Spring Boot and open this website locally.'
+      : error.message, true);
+  }
 });
 
 // Receipt lookup and print
